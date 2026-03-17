@@ -1,0 +1,1333 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  BookOpen,
+  Bookmark,
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  Compass,
+  FileText,
+  Grid3X3,
+  Heart,
+  Highlighter,
+  Home,
+  Layers3,
+  Library,
+  Palette,
+  PanelLeft,
+  Search,
+  StickyNote,
+  Target,
+} from "lucide-react";
+
+const readingPlans = [
+  {
+    id: 1,
+    title: "Estudo Bíblico",
+    progress: 33,
+    cadence: "1 encontro por semana",
+    focus: "12 encontros semanais para estudo e debate de assuntos bíblicos",
+    next: "Semana 5 · O sangue de Jesus",
+    tone: "from-rose-400 via-fuchsia-400 to-violet-400",
+    accent: "rose",
+    type: "weekly-study",
+  },
+  {
+    id: 2,
+    title: "Leitura do Novo Testamento",
+    progress: 7,
+    cadence: "Leitura contínua",
+    focus: "Leitura em andamento a partir de Marcos",
+    next: "Marcos 1–2",
+    tone: "from-sky-400 via-indigo-400 to-violet-400",
+    accent: "violet",
+    type: "new-testament",
+  },
+];
+
+const studyNotes = [
+  { id: 1, title: "Graça que transforma", reference: "Efésios 2:8-10", tags: ["graça", "salvação"], content: "A salvação é dom de Deus, mas gera uma vida prática de boas obras." },
+  { id: 2, title: "Paz em meio à ansiedade", reference: "Filipenses 4:6-7", tags: ["oração", "paz"], content: "A oração realinha o coração e guarda mente e emoções." },
+  { id: 3, title: "Amor como marca do discípulo", reference: "João 13:34-35", tags: ["amor", "discipulado"], content: "O amor visível valida a mensagem que pregamos." },
+  { id: 4, title: "Fé que persevera", reference: "Tiago 1:2-4", tags: ["fé", "maturidade"], content: "As provas moldam caráter, constância e confiança em Deus." },
+];
+
+const bookmarks = [
+  { id: 1, reference: "João 3:16", text: "Porque Deus amou o mundo de tal maneira..." },
+  { id: 2, reference: "Romanos 8:28", text: "Todas as coisas cooperam para o bem daqueles que amam a Deus." },
+  { id: 3, reference: "Salmos 119:105", text: "Lâmpada para os meus pés é a tua palavra..." },
+  { id: 4, reference: "Filipenses 4:6", text: "Não andeis ansiosos por coisa alguma..." },
+];
+
+const weeklyPlan = [
+  { week: 1, theme: "Intimidade com Deus", baseText: "Salmo 63:1–8", application: "Que mudanças práticas você pode fazer nesta semana para buscar mais a Deus?", status: "concluído", questions: ["O que Davi demonstra sentir por Deus neste salmo?", "O que significa ter sede de Deus?", "Quais práticas ajudam a cultivar intimidade com Deus?", "O que pode estar competindo com Deus por nosso afeto?"] },
+  { week: 2, theme: "Oração", baseText: "Mateus 6:5–13", application: "Como está sua vida de oração atualmente?", status: "concluído", questions: ["O que Jesus critica na forma de oração dos fariseus?", "O que o Pai Nosso ensina sobre a prioridade da oração?", "O que significa seja feita a tua vontade?", "Como tornar a oração mais constante na vida diária?"] },
+  { week: 3, theme: "Autoridade das Escrituras", baseText: "2 Timóteo 3:16–17", application: "Como tornar a leitura bíblica mais constante?", status: "concluído", questions: ["O que significa dizer que a Bíblia é inspirada por Deus?", "Para que a Escritura é útil segundo o texto?", "Por que a Bíblia deve ser a autoridade final da vida cristã?", "Como evitar interpretar a Bíblia apenas segundo nossa opinião?"] },
+  { week: 4, theme: "Pecado e condição humana", baseText: "Romanos 3:10–23", application: "Existe algum pecado que precisa ser tratado diante de Deus?", status: "concluído", questions: ["Como Paulo descreve a condição espiritual da humanidade?", "O que significa todos pecaram?", "Como o pecado afeta nosso relacionamento com Deus?", "De que formas o pecado ainda luta contra o cristão?"] },
+  { week: 5, theme: "O sangue de Jesus", baseText: "Hebreus 9:11–14", application: "Como a obra de Cristo impacta sua gratidão e adoração?", status: "em andamento", questions: ["Por que o Antigo Testamento utilizava sacrifícios?", "O que torna o sacrifício de Cristo superior?", "O que significa sermos purificados pelo sangue de Jesus?", "Por que a cruz é central no cristianismo?"] },
+  { week: 6, theme: "Salvação pela graça", baseText: "Efésios 2:1–10", application: "Em que áreas você ainda tenta merecer o favor de Deus?", status: "pendente", questions: ["Como Paulo descreve a vida antes da salvação?", "O que significa sermos salvos pela graça?", "Por que a salvação não pode ser conquistada por obras?", "O que significa sermos criados para boas obras?"] },
+  { week: 7, theme: "Novo nascimento", baseText: "João 3:1–8", application: "Quais mudanças Deus já produziu em sua vida?", status: "pendente", questions: ["Por que Jesus diz que é necessário nascer de novo?", "O que significa nascer do Espírito?", "Como reconhecer evidências do novo nascimento?", "Como o novo nascimento transforma a vida do cristão?"] },
+  { week: 8, theme: "Santificação", baseText: "1 Tessalonicenses 4:3–7", application: "Existe alguma área da vida que Deus está chamando à santidade?", status: "pendente", questions: ["O que significa santificação?", "Qual a diferença entre justificação e santificação?", "Por que a santidade é importante para Deus?", "Quais práticas ajudam a crescer em santidade?"] },
+  { week: 9, theme: "Luta contra o pecado", baseText: "Romanos 7:18–25", application: "Como vigiar melhor contra tentações?", status: "pendente", questions: ["Como Paulo descreve o conflito interior do cristão?", "Por que o cristão ainda luta contra o pecado?", "Qual o papel da graça nesse conflito?", "O que ajuda a vencer tentações?"] },
+  { week: 10, theme: "Amor e perdão", baseText: "Colossenses 3:12–14", application: "Existe alguém que você precisa perdoar?", status: "pendente", questions: ["Quais características devem marcar o cristão?", "Por que o perdão é central na vida cristã?", "O que torna o perdão difícil?", "Como cultivar amor genuíno pelas pessoas?"] },
+  { week: 11, theme: "Confiança na providência de Deus", baseText: "Mateus 6:25–34", application: "Que preocupações você precisa entregar a Deus?", status: "pendente", questions: ["Por que Jesus fala sobre ansiedade?", "O que significa buscar primeiro o Reino de Deus?", "Como confiar em Deus nas preocupações diárias?", "Como combater a ansiedade biblicamente?"] },
+  { week: 12, theme: "Perseverança e esperança cristã", baseText: "Romanos 8:31–39", application: "Como essa verdade muda sua forma de enfrentar dificuldades?", status: "pendente", questions: ["O que significa Deus ser por nós?", "Por que nada pode separar o cristão do amor de Cristo?", "Como essa promessa fortalece a fé em tempos difíceis?", "Como viver com os olhos na eternidade?"] },
+];
+
+const bibleBooks = [
+  { testament: "Antigo Testamento", books: [
+    { name: "Gênesis", chapters: 50 }, { name: "Êxodo", chapters: 40 }, { name: "Levítico", chapters: 27 }, { name: "Números", chapters: 36 }, { name: "Deuteronômio", chapters: 34 },
+    { name: "Josué", chapters: 24 }, { name: "Juízes", chapters: 21 }, { name: "Rute", chapters: 4 }, { name: "1 Samuel", chapters: 31 }, { name: "2 Samuel", chapters: 24 },
+    { name: "1 Reis", chapters: 22 }, { name: "2 Reis", chapters: 25 }, { name: "1 Crônicas", chapters: 29 }, { name: "2 Crônicas", chapters: 36 }, { name: "Esdras", chapters: 10 },
+    { name: "Neemias", chapters: 13 }, { name: "Ester", chapters: 10 }, { name: "Jó", chapters: 42 }, { name: "Salmos", chapters: 150 }, { name: "Provérbios", chapters: 31 },
+    { name: "Eclesiastes", chapters: 12 }, { name: "Cantares", chapters: 8 }, { name: "Isaías", chapters: 66 }, { name: "Jeremias", chapters: 52 }, { name: "Lamentações", chapters: 5 },
+    { name: "Ezequiel", chapters: 48 }, { name: "Daniel", chapters: 12 }, { name: "Oséias", chapters: 14 }, { name: "Joel", chapters: 3 }, { name: "Amós", chapters: 9 },
+    { name: "Obadias", chapters: 1 }, { name: "Jonas", chapters: 4 }, { name: "Miqueias", chapters: 7 }, { name: "Naum", chapters: 3 }, { name: "Habacuque", chapters: 3 },
+    { name: "Sofonias", chapters: 3 }, { name: "Ageu", chapters: 2 }, { name: "Zacarias", chapters: 14 }, { name: "Malaquias", chapters: 4 },
+  ]},
+  { testament: "Novo Testamento", books: [
+    { name: "Mateus", chapters: 28 }, { name: "Marcos", chapters: 16 }, { name: "Lucas", chapters: 24 }, { name: "João", chapters: 21 }, { name: "Atos", chapters: 28 },
+    { name: "Romanos", chapters: 16 }, { name: "1 Coríntios", chapters: 16 }, { name: "2 Coríntios", chapters: 13 }, { name: "Gálatas", chapters: 6 }, { name: "Efésios", chapters: 6 },
+    { name: "Filipenses", chapters: 4 }, { name: "Colossenses", chapters: 4 }, { name: "1 Tessalonicenses", chapters: 5 }, { name: "2 Tessalonicenses", chapters: 3 }, { name: "1 Timóteo", chapters: 6 },
+    { name: "2 Timóteo", chapters: 4 }, { name: "Tito", chapters: 3 }, { name: "Filemom", chapters: 1 }, { name: "Hebreus", chapters: 13 }, { name: "Tiago", chapters: 5 },
+    { name: "1 Pedro", chapters: 5 }, { name: "2 Pedro", chapters: 3 }, { name: "1 João", chapters: 5 }, { name: "2 João", chapters: 1 }, { name: "3 João", chapters: 1 },
+    { name: "Judas", chapters: 1 }, { name: "Apocalipse", chapters: 22 },
+  ]},
+];
+
+const flatBooks = bibleBooks.flatMap((group) => group.books.map((book) => ({ ...book, testament: group.testament })));
+const totalBibleChapters = flatBooks.reduce((sum, book) => sum + book.chapters, 0);
+
+const localChapterSeeds = {
+  "João-3": [
+    { verse: 16, text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito para que todo aquele que nele crê não pereça, mas tenha a vida eterna." },
+    { verse: 17, text: "Pois Deus enviou o seu Filho ao mundo, não para condenar o mundo, mas para que o mundo fosse salvo por ele." },
+    { verse: 18, text: "Quem nele crê não é condenado; mas quem não crê já está condenado." },
+  ],
+  "Marcos-1": [
+    { verse: 1, text: "Princípio do evangelho de Jesus Cristo, Filho de Deus." },
+    { verse: 2, text: "Como está escrito na profecia de Isaías: Eis que envio diante da tua face o meu mensageiro." },
+    { verse: 3, text: "Voz do que clama no deserto: Preparai o caminho do Senhor." },
+    { verse: 4, text: "Apareceu João batizando no deserto e pregando batismo de arrependimento." },
+    { verse: 5, text: "Saíam a ter com ele toda a província da Judeia e todos os de Jerusalém." },
+    { verse: 6, text: "As vestes de João eram feitas de pelos de camelo e ele comia gafanhotos e mel silvestre." },
+  ],
+  "Salmos-23": [
+    { verse: 1, text: "O Senhor é o meu pastor; nada me faltará." },
+    { verse: 2, text: "Deitar-me faz em verdes pastos, guia-me mansamente a águas tranquilas." },
+    { verse: 3, text: "Refrigera a minha alma; guia-me pelas veredas da justiça por amor do seu nome." },
+  ],
+};
+
+const highlightColors = {
+  yellow: "bg-amber-200/80 ring-amber-300",
+  pink: "bg-pink-200/80 ring-pink-300",
+  blue: "bg-sky-200/80 ring-sky-300",
+  green: "bg-emerald-200/80 ring-emerald-300",
+  purple: "bg-violet-200/80 ring-violet-300",
+};
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function createGeneratedChapter(bookName, chapter) {
+  return Array.from({ length: 12 }, (_, index) => ({
+    verse: index + 1,
+    text: `${bookName} ${chapter}:${index + 1} · Conteúdo ilustrativo do leitor bíblico para navegação de capítulos e versículos nesta prévia interativa.`,
+  }));
+}
+
+function getChapterText(bookName, chapter) {
+  return localChapterSeeds[`${bookName}-${chapter}`] || createGeneratedChapter(bookName, chapter);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderHighlightedContent(text, highlights, verseKey) {
+  if (!highlights || highlights.length === 0) return text;
+  const normalized = highlights
+    .map((item, index) => {
+      if (typeof item.start === "number" && typeof item.end === "number") {
+        return {
+          start: Math.max(0, item.start),
+          end: Math.min(text.length, item.end),
+          id: `${verseKey}-${index}-${item.start}`,
+          color: item.color,
+        };
+      }
+      if (!item.text) return null;
+      const start = text.toLowerCase().indexOf(item.text.toLowerCase());
+      if (start === -1) return null;
+      return {
+        start,
+        end: start + item.text.length,
+        id: `${verseKey}-${index}-${start}`,
+        color: item.color,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+
+  const filtered = [];
+  let lastEnd = -1;
+  normalized.forEach((match) => {
+    if (match.start >= lastEnd) {
+      filtered.push(match);
+      lastEnd = match.end;
+    }
+  });
+
+  if (filtered.length === 0) return text;
+
+  const parts = [];
+  let cursor = 0;
+  filtered.forEach((match) => {
+    if (match.start > cursor) parts.push(text.slice(cursor, match.start));
+    parts.push(
+      <mark key={match.id} className={cn("rounded px-1 py-0.5 ring-1", highlightColors[match.color] || highlightColors.yellow)}>
+        {text.slice(match.start, match.end)}
+      </mark>,
+    );
+    cursor = match.end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
+}
+
+function GlassCard({ children, className = "", interactive = false }) {
+  return (
+    <motion.div
+      whileHover={interactive ? { y: -4, scale: 1.01 } : undefined}
+      transition={{ type: "spring", stiffness: 240, damping: 18 }}
+      className={cn(
+        "rounded-[2rem] border border-white/70 bg-white/72 shadow-[0_20px_80px_-30px_rgba(244,114,182,0.35)] backdrop-blur-xl",
+        interactive && "cursor-pointer",
+        className,
+      )}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function Pill({ children, tone = "rose" }) {
+  const tones = {
+    rose: "bg-rose-100 text-rose-700",
+    violet: "bg-violet-100 text-violet-700",
+    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-700",
+    slate: "bg-slate-100 text-slate-700",
+  };
+  return <span className={cn("inline-flex rounded-full px-3 py-1 text-xs font-semibold", tones[tone] || tones.rose)}>{children}</span>;
+}
+
+function SectionTitle({ eyebrow, title, description, action }) {
+  return (
+    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div>
+        {eyebrow && <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-rose-500">{eyebrow}</div>}
+        <h2 className="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">{title}</h2>
+        {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function TopBar({ title, subtitle, actions, breadcrumbs = [], onBack }) {
+  return (
+    <div className="mb-6 rounded-[1.7rem] border border-white/70 bg-white/68 p-4 shadow-[0_16px_60px_-26px_rgba(244,114,182,0.28)] backdrop-blur-xl md:p-5">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        {onBack && (
+          <button onClick={onBack} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-500 transition hover:border-rose-200 hover:text-rose-600">
+            <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+          </button>
+        )}
+        {breadcrumbs.map((item, index) => (
+          <React.Fragment key={`${item}-${index}`}>
+            <span>{item}</span>
+            {index < breadcrumbs.length - 1 && <span className="text-slate-300">/</span>}
+          </React.Fragment>
+        ))}
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="text-2xl font-black tracking-tight text-slate-900 md:text-3xl">{title}</div>
+          {subtitle && <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      </div>
+    </div>
+  );
+}
+
+function HeroMetric({ icon: Icon, label, value, light = false }) {
+  return (
+    <motion.div whileHover={{ y: -4 }} className={cn("rounded-3xl border p-4 shadow-sm backdrop-blur-md", light ? "border-white/20 bg-white/12" : "border-white/80 bg-white/65")}>
+      <Icon className={cn("mb-3 h-5 w-5", light ? "text-white" : "text-rose-500")} />
+      <div className={cn("text-2xl font-black", light ? "text-white" : "text-slate-900")}>{value}</div>
+      <div className={cn("text-sm", light ? "text-white/85" : "text-slate-600")}>{label}</div>
+    </motion.div>
+  );
+}
+
+function PlanCard({ plan, onClick }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ y: -10, rotateX: 3, rotateY: -3, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 220, damping: 18 }}
+      className={cn("group relative min-h-[340px] overflow-hidden rounded-[2.2rem] border border-white/20 bg-gradient-to-br p-7 text-left shadow-[0_40px_120px_-35px_rgba(15,23,42,0.25)]", plan.tone)}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.3),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.12),transparent_30%)]" />
+      <div className="relative z-10 flex h-full flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <Pill tone={plan.accent === "violet" ? "violet" : "rose"}>{plan.cadence}</Pill>
+            <div className="rounded-full bg-white/14 px-3 py-1 text-xs font-semibold text-white/90">{plan.progress}%</div>
+          </div>
+          <div className="mt-5 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-white md:text-[2.5rem]">{plan.title}</div>
+          <p className="mt-4 max-w-md text-sm leading-7 text-white/92">{plan.focus}</p>
+        </div>
+        <div className="mt-8">
+          <div className="mb-3 flex items-center justify-between text-sm text-white/88">
+            <span>Progresso</span>
+            <span className="font-bold">{plan.progress}%</span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-white/18">
+            <motion.div initial={{ width: 0 }} animate={{ width: `${plan.progress}%` }} transition={{ duration: 1.2 }} className="h-3 rounded-full bg-white" />
+          </div>
+          <div className="mt-4 text-sm font-semibold text-white/90">Próximo: {plan.next}</div>
+          <div className="mt-4 flex items-center gap-2 text-lg font-semibold text-white">
+            Abrir plano
+            <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />
+          </div>
+        </div>
+      </div>
+    </motion.button>
+  );
+}
+
+function DashboardView({ onOpenPlans, onOpenBible }) {
+  const totalProgress = useMemo(() => Math.round(readingPlans.reduce((sum, plan) => sum + plan.progress, 0) / readingPlans.length), []);
+  const completedMeetings = useMemo(() => weeklyPlan.filter((week) => week.status === "concluído").length, []);
+  const nextMeeting = weeklyPlan.find((week) => week.status !== "concluído") || weeklyPlan[weeklyPlan.length - 1];
+  const pendingMeetings = weeklyPlan.filter((week) => week.status === "pendente").length;
+  const activeMeetings = weeklyPlan.filter((week) => week.status === "em andamento").length;
+  const studyCompletion = Math.round((nextMeeting.week / 12) * 100);
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      <TopBar
+        title="Painel"
+        subtitle="Uma experiência mais ousada, viva e imersiva para retomar estudo, leitura e exploração bíblica."
+        breadcrumbs={["Painel"]}
+        actions={
+          <>
+            <button onClick={onOpenPlans} className="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:-translate-y-0.5 hover:shadow-md">
+              <Compass className="h-4 w-4" /> continuar planos
+            </button>
+            <button onClick={onOpenBible} className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600 transition hover:-translate-y-0.5 hover:shadow-md">
+              <Library className="h-4 w-4" /> abrir bíblia
+            </button>
+          </>
+        }
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="group relative overflow-hidden rounded-[2.5rem] border border-fuchsia-200/60 bg-gradient-to-br from-rose-400 via-fuchsia-400 to-violet-500 p-6 text-white shadow-[0_40px_130px_-45px_rgba(192,38,211,0.6)] md:p-8"
+      >
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, 16, 0], y: [0, -12, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/18 blur-3xl"
+        />
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, -18, 0], y: [0, 14, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-violet-200/30 blur-3xl"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.26),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.16),transparent_28%)]" />
+        <div className="relative z-10 grid gap-6 xl:grid-cols-[1.08fr_0.92fr] xl:items-end">
+          <div>
+            <Pill tone="violet">control center</Pill>
+            <div className="mt-4 max-w-3xl text-3xl font-black leading-[0.92] tracking-[-0.055em] md:text-6xl">
+              Uma jornada com mais presença, luz e movimento.
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/92 md:text-base">
+              O painel agora funciona como um centro imersivo: progresso visível, atalhos rápidos e uma sensação mais próxima de app premium do que de dashboard comum.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <motion.button whileHover={{ y: -3, scale: 1.02 }} onClick={onOpenPlans} className="rounded-[1.6rem] bg-white px-5 py-4 text-left text-sm font-bold text-fuchsia-700 shadow-sm transition">
+                <div className="mb-1">Continuar estudo</div>
+                <div className="text-xs font-medium text-fuchsia-500">Semana {nextMeeting.week} · {nextMeeting.theme}</div>
+              </motion.button>
+              <motion.button whileHover={{ y: -3, scale: 1.02 }} onClick={onOpenBible} className="rounded-[1.6rem] border border-white/25 bg-white/12 px-5 py-4 text-left text-sm font-bold text-white backdrop-blur-sm transition">
+                <div className="mb-1">Ler a Bíblia</div>
+                <div className="text-xs font-medium text-white/80">Livros, capítulos, versículos e destaques</div>
+              </motion.button>
+              <div className="rounded-[1.6rem] border border-white/25 bg-white/12 px-5 py-4 text-left text-sm font-bold text-white backdrop-blur-sm">
+                <div className="mb-1">Pendências</div>
+                <div className="text-xs font-medium text-white/80">{pendingMeetings} encontros ainda não concluídos</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
+            <HeroMetric light icon={BookOpen} label="Planos ativos" value={readingPlans.length} />
+            <HeroMetric light icon={Calendar} label="Encontros concluídos" value={completedMeetings} />
+            <HeroMetric light icon={Target} label="Progresso médio" value={`${totalProgress}%`} />
+            <HeroMetric light icon={Clock3} label="Próxima semana" value={nextMeeting.week} />
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+        <GlassCard className="overflow-hidden p-0">
+          <div className="border-b border-slate-100 px-5 pb-0 pt-5 md:px-7 md:pt-7">
+            <SectionTitle eyebrow="Jornada" title="Progresso do estudo" description="Uma visão compacta, viva e clicável da caminhada semanal." />
+          </div>
+          <div className="p-5 md:p-7">
+            <motion.div whileHover={{ y: -4, scale: 1.01 }} className="relative overflow-hidden rounded-[2rem] border border-slate-100 bg-[linear-gradient(135deg,#0f172a_0%,#1e1b4b_38%,#4c1d95_100%)] p-6 text-white shadow-[0_30px_90px_-35px_rgba(15,23,42,0.65)] md:p-7">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.10),transparent_30%)]" />
+              <motion.div aria-hidden="true" animate={{ opacity: [0.45, 0.8, 0.45], x: [-18, 18, -18] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-y-0 -left-12 w-28 bg-gradient-to-r from-transparent via-fuchsia-200/20 to-transparent blur-2xl" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.28em] text-fuchsia-200">Progresso do estudo</div>
+                    <div className="mt-2 text-3xl font-black tracking-[-0.05em] md:text-4xl">Semana {nextMeeting.week}<span className="text-white/40">/12</span></div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold text-white/85 backdrop-blur-md">{studyCompletion}%</div>
+                </div>
+
+                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/15">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${studyCompletion}%` }} transition={{ duration: 1.1, ease: "easeOut" }} className="relative h-2.5 rounded-full bg-gradient-to-r from-rose-300 via-fuchsia-300 to-violet-300">
+                    <div className="absolute inset-y-0 right-0 w-10 bg-gradient-to-r from-transparent to-white/50" />
+                  </motion.div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-6 gap-2 sm:grid-cols-12">
+                  {weeklyPlan.map((week) => {
+                    const isDone = week.status === "concluído";
+                    const isActive = week.status === "em andamento";
+                    return (
+                      <motion.button
+                        key={week.week}
+                        type="button"
+                        onClick={onOpenPlans}
+                        whileHover={{ y: -3, scale: 1.08 }}
+                        whileTap={{ scale: 0.96 }}
+                        className={cn(
+                          "flex h-10 items-center justify-center rounded-xl text-xs font-bold shadow-sm transition",
+                          isDone && "bg-emerald-400 text-white shadow-emerald-500/30",
+                          isActive && "bg-amber-400 text-white shadow-amber-500/30",
+                          !isDone && !isActive && "bg-white/15 text-white/70 hover:bg-white/25"
+                        )}
+                      >
+                        {week.week}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-[1.2rem] border border-white/10 bg-white/10 p-4 backdrop-blur-md">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">Concluídos</div>
+                    <div className="mt-2 text-2xl font-black text-white">{completedMeetings}</div>
+                  </div>
+                  <div className="rounded-[1.2rem] border border-white/10 bg-white/10 p-4 backdrop-blur-md">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">Em andamento</div>
+                    <div className="mt-2 text-2xl font-black text-white">{activeMeetings}</div>
+                  </div>
+                  <div className="rounded-[1.2rem] border border-white/10 bg-white/10 p-4 backdrop-blur-md">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">Pendentes</div>
+                    <div className="mt-2 text-2xl font-black text-white">{pendingMeetings}</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </GlassCard>
+
+        <div className="space-y-6">
+          <GlassCard className="p-5 md:p-6">
+            <SectionTitle eyebrow="Retomada" title="Acesso rápido" description="Atalhos úteis para voltar ao que importa." />
+            <div className="mt-5 grid gap-3">
+              <motion.button whileHover={{ y: -2, scale: 1.01 }} onClick={onOpenPlans} className="flex items-center justify-between rounded-[1.35rem] border border-slate-100 bg-slate-50 px-4 py-4 text-left transition hover:border-rose-100 hover:bg-rose-50">
+                <div>
+                  <div className="font-bold text-slate-900">Continuar plano principal</div>
+                  <div className="mt-1 text-sm text-slate-500">Semana {nextMeeting.week} · {nextMeeting.theme}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </motion.button>
+              <motion.button whileHover={{ y: -2, scale: 1.01 }} onClick={onOpenBible} className="flex items-center justify-between rounded-[1.35rem] border border-slate-100 bg-slate-50 px-4 py-4 text-left transition hover:border-violet-100 hover:bg-violet-50">
+                <div>
+                  <div className="font-bold text-slate-900">Abrir Bíblia interativa</div>
+                  <div className="mt-1 text-sm text-slate-500">Selecionar palavras, destacar e anotar trechos</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </motion.button>
+              <div className="rounded-[1.35rem] border border-slate-100 bg-slate-50 px-4 py-4">
+                <div className="font-bold text-slate-900">Leitura atual</div>
+                <div className="mt-1 text-sm text-slate-500">Novo Testamento · Marcos 1–2</div>
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-5 md:p-6">
+            <SectionTitle eyebrow="Planos" title="Em andamento" description="Os dois módulos principais com aparência rica e clara." />
+            <div className="mt-5 grid gap-4">
+              {readingPlans.map((plan) => (
+                <motion.button key={plan.id} type="button" onClick={onOpenPlans} whileHover={{ y: -3, scale: 1.01 }} className={cn("overflow-hidden rounded-[1.7rem] border border-white/20 bg-gradient-to-br p-5 text-left shadow-[0_25px_80px_-40px_rgba(15,23,42,0.25)]", plan.tone)}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/78">{plan.cadence}</div>
+                      <div className="mt-3 text-2xl font-black tracking-tight text-white">{plan.title}</div>
+                      <p className="mt-3 max-w-lg text-sm leading-7 text-white/92">{plan.focus}</p>
+                    </div>
+                    <div className="rounded-full bg-white/14 px-3 py-1 text-xs font-semibold text-white">{plan.progress}%</div>
+                  </div>
+                  <div className="mt-5 h-3 rounded-full bg-white/18">
+                    <div className="h-3 rounded-full bg-white" style={{ width: `${plan.progress}%` }} />
+                  </div>
+                  <div className="mt-4 text-sm font-semibold text-white/90">Próximo: {plan.next}</div>
+                </motion.button>
+              ))}
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudyPlansHub({ onSelectPlan }) {
+  return (
+    <div className="space-y-8">
+      <TopBar
+        title="Planos de Estudo"
+        subtitle="Escolha a trilha que deseja acessar agora."
+        breadcrumbs={["Painel", "Planos de estudo"]}
+        actions={
+          <>
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600"><Compass className="h-4 w-4" /> navegação guiada</div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600"><Layers3 className="h-4 w-4" /> módulos premium</div>
+          </>
+        }
+      />
+      <div className="grid gap-8 xl:grid-cols-2">
+        {readingPlans.map((plan) => (
+          <PlanCard key={plan.id} plan={plan} onClick={() => onSelectPlan(plan.type)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeeklyPlanView({ onBack, onOpenBible }) {
+  const [openWeek, setOpenWeek] = useState(5);
+  const [studyWeeks, setStudyWeeks] = useState(weeklyPlan);
+  const [questionFields, setQuestionFields] = useState(() => Object.fromEntries(weeklyPlan.map((week) => [week.week, week.questions.map(() => ({ answer: "", notes: "", references: "" }))])));
+  const [openQuestions, setOpenQuestions] = useState(() => Object.fromEntries(weeklyPlan.map((week) => [week.week, null])));
+  const [conclusions, setConclusions] = useState(() => Object.fromEntries(weeklyPlan.map((week) => [week.week, ""])));
+  const [baseTextPreview, setBaseTextPreview] = useState(null);
+  const [baseTextModalTop, setBaseTextModalTop] = useState(24);
+
+  const totalMeetings = studyWeeks.length;
+  const completedMeetings = studyWeeks.filter((week) => week.status === "concluído").length;
+  const progress = Math.round((completedMeetings / totalMeetings) * 100);
+  const statusTone = { pendente: "rose", "em andamento": "amber", concluído: "emerald" };
+
+  const parseBaseReference = (reference) => {
+    const normalized = reference.replace("–", "-");
+    const pieces = normalized.split(" ");
+    const chapterVerse = pieces.pop();
+    const bookName = pieces.join(" ").trim();
+    if (!chapterVerse || !bookName || chapterVerse.indexOf(":") === -1) return null;
+    const chapterParts = chapterVerse.split(":");
+    const chapter = Number(chapterParts[0]);
+    const versePart = chapterParts[1] || "";
+    const verseParts = versePart.split("-");
+    const startVerse = Number(verseParts[0]);
+    const endVerse = Number(verseParts[1] || verseParts[0]);
+    if (!chapter || !startVerse || !endVerse) return null;
+    return { bookName, chapter, startVerse, endVerse };
+  };
+
+  const openBaseTextCard = (reference, event) => {
+    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 800;
+    const triggerRect = event?.currentTarget?.getBoundingClientRect?.();
+    const preferredTop = triggerRect ? triggerRect.top - 18 : viewportHeight * 0.18;
+    const estimatedModalHeight = Math.min(viewportHeight - 24, 620);
+    const maxTop = Math.max(12, viewportHeight - estimatedModalHeight - 12);
+    const computedTop = Math.max(12, Math.min(preferredTop, maxTop));
+    setBaseTextModalTop(computedTop);
+    const parsed = parseBaseReference(reference);
+    if (!parsed) {
+      setBaseTextPreview({
+        reference,
+        verses: [{ verse: 1, text: "Prévia local para " + reference + "." }],
+      });
+      return;
+    }
+    const chapterVerses = getChapterText(parsed.bookName, parsed.chapter);
+    const verses = chapterVerses.filter((item) => item.verse >= parsed.startVerse && item.verse <= parsed.endVerse);
+    setBaseTextPreview({
+      reference,
+      verses: verses.length > 0 ? verses : [{ verse: parsed.startVerse, text: "Prévia local para " + reference + "." }],
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <TopBar
+        title="Estudo Bíblico"
+        subtitle="12 encontros semanais com perguntas, respostas, notas e conclusão por encontro."
+        breadcrumbs={["Planos de estudo", "Estudo Bíblico"]}
+        onBack={onBack}
+        actions={
+          <>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600"><Check className="h-4 w-4" /> {completedMeetings}/{totalMeetings} concluídos</div>
+            <button onClick={onOpenBible} className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600"><Library className="h-4 w-4" /> abrir bíblia</button>
+          </>
+        }
+      />
+
+      <AnimatePresence>
+        {baseTextPreview && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/35 p-2 backdrop-blur-sm sm:p-4" onClick={() => setBaseTextPreview(null)}>
+            <motion.div initial={{ opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 14, scale: 0.96 }} transition={{ duration: 0.2 }} className="w-full max-w-2xl self-start overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_30px_120px_-30px_rgba(15,23,42,0.35)] max-h-[calc(100dvh-1rem)]" style={{ marginTop: baseTextModalTop + 'px', marginBottom: '12px' }} onClick={(e) => e.stopPropagation()}>
+              <div className="border-b border-slate-100 bg-gradient-to-br from-rose-50 via-fuchsia-50 to-violet-50 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.22em] text-rose-500">Texto base do encontro</div>
+                    <div className="mt-2 text-2xl font-black tracking-tight text-slate-900">{baseTextPreview.reference}</div>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">A leitura abre em um card modal para não interromper o fluxo do estudo semanal.</p>
+                  </div>
+                  <button onClick={() => setBaseTextPreview(null)} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">fechar</button>
+                </div>
+              </div>
+              <div className="space-y-3 overflow-y-auto p-4 sm:p-6 max-h-[calc(100dvh-12.5rem)]">
+                {baseTextPreview.verses.map((item) => (
+                  <div key={baseTextPreview.reference + "-" + item.verse} className="rounded-[1.35rem] border border-slate-100 bg-white p-4 shadow-sm">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-500">Verso {item.verse}</div>
+                    <p className="text-sm leading-8 text-slate-700">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <GlassCard className="overflow-hidden border border-violet-100 bg-gradient-to-br from-violet-50 via-pink-50 to-rose-50 p-8 text-slate-900">
+        <SectionTitle eyebrow="Jornada" title="Plano de estudo em 12 encontros" description="Cada semana representa um encontro, com visão clara do progresso e conteúdo." />
+        <div className="mt-6">
+          <div className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-600">
+            <span>{completedMeetings} de {totalMeetings} encontros concluídos</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-3 rounded-full bg-white">
+            <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.2 }} className="h-3 rounded-full bg-gradient-to-r from-violet-300 via-pink-300 to-rose-300" />
+          </div>
+        </div>
+      </GlassCard>
+
+      <div className="space-y-4">
+        {studyWeeks.map((week, i) => {
+          const isOpen = openWeek === week.week;
+          return (
+            <motion.div key={week.week} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+              <GlassCard className="overflow-hidden border border-rose-100 bg-white/90">
+                <button onClick={() => setOpenWeek(isOpen ? -1 : week.week)} className="flex w-full items-center justify-between gap-4 p-5 text-left md:p-6">
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-[0.22em] text-violet-500">Semana {week.week}</div>
+                    <div className="mt-1 text-xl font-bold text-slate-900">{week.theme}</div>
+                    <div className="mt-2 text-sm text-slate-500">Texto base para o estudo: <button className="font-semibold text-rose-600 underline decoration-2 hover:text-rose-700" onClick={(e) => { e.stopPropagation(); openBaseTextCard(week.baseText, e); }}>{week.baseText}</button></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Pill tone={statusTone[week.status]}>{week.status}</Pill>
+                    <ChevronDown className={cn("h-5 w-5 text-slate-500 transition", isOpen && "rotate-180")} />
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-rose-100">
+                      <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-[1.2fr_0.8fr]">
+                        <div className="rounded-[1.5rem] border border-rose-100 bg-gradient-to-br from-white to-rose-50 p-5">
+                          <div className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-rose-500">Perguntas para reflexão</div>
+                          <div className="space-y-3">
+                            {week.questions.map((question, idx) => {
+                              const field = questionFields[week.week]?.[idx] || { answer: "", notes: "", references: "" };
+                              const isQuestionOpen = openQuestions[week.week] === idx;
+                              return (
+                                <motion.div whileHover={{ y: -2 }} key={idx} className="overflow-hidden rounded-[1.4rem] border border-white bg-white/95 shadow-sm">
+                                  <button type="button" onClick={() => setOpenQuestions((prev) => ({ ...prev, [week.week]: prev[week.week] === idx ? null : idx }))} className="flex w-full items-center justify-between gap-4 p-4 text-left">
+                                    <div className="text-sm font-semibold leading-6 text-slate-800"><span className="mr-2 font-bold text-rose-500">{idx + 1}.</span>{question}</div>
+                                    <ChevronDown className={cn("h-5 w-5 shrink-0 text-rose-400 transition", isQuestionOpen && "rotate-180")} />
+                                  </button>
+                                  <AnimatePresence initial={false}>
+                                    {isQuestionOpen && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-rose-100">
+                                        <div className="space-y-3 p-4">
+                                          <textarea value={field.answer} onChange={(e) => setQuestionFields((prev) => ({ ...prev, [week.week]: prev[week.week].map((item, itemIdx) => itemIdx === idx ? { ...item, answer: e.target.value } : item) }))} placeholder="Resposta / desenvolvimento" className="min-h-[88px] w-full rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none" />
+                                          <textarea value={field.notes} onChange={(e) => setQuestionFields((prev) => ({ ...prev, [week.week]: prev[week.week].map((item, itemIdx) => itemIdx === idx ? { ...item, notes: e.target.value } : item) }))} placeholder="Anotações" className="min-h-[72px] w-full rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none" />
+                                          <input value={field.references} onChange={(e) => setQuestionFields((prev) => ({ ...prev, [week.week]: prev[week.week].map((item, itemIdx) => itemIdx === idx ? { ...item, references: e.target.value } : item) }))} placeholder="Referências bíblicas ou observações extras" className="w-full rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none" />
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50 p-5">
+                            <div className="text-sm font-bold uppercase tracking-[0.18em] text-violet-500">Aplicação prática</div>
+                            <p className="mt-3 text-sm leading-7 text-slate-700">{week.application}</p>
+                          </div>
+                          <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50 p-5">
+                            <div className="text-sm font-bold uppercase tracking-[0.18em] text-amber-600">Conclusão do estudo</div>
+                            <div className="mt-4 space-y-3">
+                              <select value={week.status} onChange={(e) => setStudyWeeks((prev) => prev.map((item) => item.week === week.week ? { ...item, status: e.target.value } : item))} className="w-full rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none">
+                                <option value="pendente">Pendente</option>
+                                <option value="em andamento">Em andamento</option>
+                                <option value="concluído">Concluído</option>
+                              </select>
+                              <textarea value={conclusions[week.week]} onChange={(e) => setConclusions((prev) => ({ ...prev, [week.week]: e.target.value }))} placeholder="Conclusão geral do encontro" className="min-h-[140px] w-full rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </GlassCard>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function NotesView() {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => studyNotes.filter((note) => [note.title, note.reference, note.content, ...note.tags].join(" ").toLowerCase().includes(query.toLowerCase())), [query]);
+  return (
+    <div className="space-y-6">
+      <TopBar title="Anotações" subtitle="Uma área para organizar os principais insights do estudo." breadcrumbs={["Anotações"]} actions={<div className="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600"><StickyNote className="h-4 w-4" /> insights</div>} />
+      <SectionTitle eyebrow="Conhecimento" title="Anotações de estudo" description="Busca local com filtros e cards com profundidade visual." action={<div className="relative w-full md:w-80"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar anotações..." className="w-full rounded-2xl border border-rose-100 bg-white/80 py-3 pl-11 pr-4 outline-none" /></div>} />
+      <div className="grid gap-4 xl:grid-cols-2">
+        {filtered.map((note, i) => (
+          <motion.div key={note.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <GlassCard className="p-5 md:p-6" interactive>
+              <div className="mb-3 flex flex-wrap gap-2">{note.tags.map((tag) => <Pill key={tag}>{tag}</Pill>)}</div>
+              <div className="text-xl font-bold text-slate-900">{note.title}</div>
+              <div className="mt-1 text-sm font-semibold text-rose-500">{note.reference}</div>
+              <p className="mt-4 text-sm leading-7 text-slate-600">{note.content}</p>
+            </GlassCard>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BookmarksView() {
+  return (
+    <div className="space-y-6">
+      <TopBar title="Favoritos" subtitle="Versos salvos para revisão rápida." breadcrumbs={["Favoritos"]} actions={<div className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600"><Heart className="h-4 w-4" /> coleção</div>} />
+      <SectionTitle eyebrow="Favoritos" title="Versos salvos" description="Cards refinados, com feedback de hover e destaque visual." />
+      <div className="grid gap-4 xl:grid-cols-2">
+        {bookmarks.map((item, i) => (
+          <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <GlassCard className="group p-6" interactive>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3 text-rose-500"><Bookmark className="h-5 w-5" /> <span className="text-sm font-semibold">Verso salvo</span></div>
+                <Heart className="h-5 w-5 fill-rose-500 text-rose-500 transition group-hover:scale-110" />
+              </div>
+              <p className="text-lg font-semibold leading-8 text-slate-900">{item.text}</p>
+              <div className="mt-4 text-sm font-bold text-rose-600">{item.reference}</div>
+            </GlassCard>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NewTestamentPlanView({ onBack }) {
+  const ntBooks = bibleBooks.find((group) => group.testament === "Novo Testamento")?.books || [];
+  const [selectedBookName, setSelectedBookName] = useState("Marcos");
+  const [selectedChapter, setSelectedChapter] = useState(1);
+  const chapterText = useMemo(() => getChapterText(selectedBookName, selectedChapter), [selectedBookName, selectedChapter]);
+  const selectedBook = ntBooks.find((book) => book.name === selectedBookName) || ntBooks[0];
+  const chapterButtons = Array.from({ length: selectedBook?.chapters || 1 }, (_, i) => i + 1);
+
+  return (
+    <div className="space-y-6">
+      <TopBar title="Leitura do Novo Testamento" subtitle="Leitura contínua com navegação rápida por livro e capítulo." breadcrumbs={["Planos de estudo", "Leitura do Novo Testamento"]} onBack={onBack} actions={<div className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600"><BookOpen className="h-4 w-4" /> livro atual: {selectedBookName}</div>} />
+      <GlassCard className="overflow-hidden border border-indigo-200/60 bg-gradient-to-br from-violet-300 via-indigo-300 to-sky-300 p-8 text-white shadow-[0_30px_100px_-30px_rgba(99,102,241,0.5)]">
+        <SectionTitle eyebrow="Leitura contínua" title="Plano de leitura do Novo Testamento" description="Vocês já estão em Marcos, então este espaço funciona como um leitor elegante e contínuo para acompanhar o avanço." />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <HeroMetric light icon={BookOpen} label="Livro atual" value={selectedBookName} />
+          <HeroMetric light icon={Calendar} label="Capítulos" value={selectedBook?.chapters || 0} />
+          <HeroMetric light icon={Target} label="Progresso" value="Marcos" />
+        </div>
+      </GlassCard>
+
+      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+        <GlassCard className="p-5">
+          <div className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-violet-500">Livros do Novo Testamento</div>
+          <div className="max-h-[620px] space-y-2 overflow-auto pr-1">
+            {ntBooks.map((book) => {
+              const active = book.name === selectedBookName;
+              return (
+                <button key={book.name} onClick={() => { setSelectedBookName(book.name); setSelectedChapter(1); }} className={cn("flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition", active ? "bg-gradient-to-r from-violet-500 to-indigo-500 text-white" : "bg-violet-50 text-slate-700 hover:bg-violet-100")}>
+                  <span className="font-medium">{book.name}</span>
+                  <span className={cn("text-xs font-semibold", active ? "text-white/80" : "text-slate-500")}>{book.chapters} cap.</span>
+                </button>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        <div className="space-y-6">
+          <GlassCard className="p-5 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.22em] text-violet-500">Leitura atual</div>
+                <h3 className="mt-1 text-2xl font-black text-slate-900">{selectedBookName} {selectedChapter}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Navegue pelos capítulos e acompanhe a leitura contínua.</p>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-2">
+                <Grid3X3 className="ml-2 h-4 w-4 text-slate-400" />
+                <select value={selectedChapter} onChange={(e) => setSelectedChapter(Number(e.target.value))} className="rounded-xl bg-transparent px-2 py-2 text-sm outline-none">
+                  {chapterButtons.map((chapter) => <option key={chapter} value={chapter}>Capítulo {chapter}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {chapterButtons.slice(0, Math.min(24, chapterButtons.length)).map((chapter) => (
+                <button key={chapter} onClick={() => setSelectedChapter(chapter)} className={cn("rounded-xl px-3 py-2 text-sm font-semibold transition", selectedChapter === chapter ? "bg-violet-500 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>{chapter}</button>
+              ))}
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-5 md:p-6">
+            <div className="mb-4 flex items-center gap-3 text-slate-900"><Library className="h-5 w-5 text-violet-500" /> <span className="font-semibold">Texto bíblico</span></div>
+            <div className="max-h-[520px] space-y-4 overflow-auto pr-1">
+              {chapterText.map((verse) => (
+                <motion.div key={`${selectedBookName}-${selectedChapter}-${verse.verse}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-slate-100 bg-white/80 p-4">
+                  <div className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-500">Verso {verse.verse}</div>
+                  <p className="text-sm leading-7 text-slate-700">{verse.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BibleExplorerView() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTestament, setSelectedTestament] = useState("Novo Testamento");
+  const defaultBook = useMemo(() => flatBooks.find((book) => book.name === "Marcos") || flatBooks[0], []);
+  const [selectedBook, setSelectedBook] = useState(defaultBook);
+  const [selectedChapter, setSelectedChapter] = useState(1);
+  const [verseRange, setVerseRange] = useState({ start: 1, end: 6 });
+  const [highlightsByVerse, setHighlightsByVerse] = useState({});
+  const [selectionState, setSelectionState] = useState({ verseKey: null, text: "", color: "yellow", x: 0, y: 0, start: null, end: null });
+  const [noteDrafts, setNoteDrafts] = useState({});
+  const [noteModeVerseKey, setNoteModeVerseKey] = useState(null);
+  const readerRef = useRef(null);
+  const verseRefs = useRef({});
+
+  useEffect(() => {
+    const first = bibleBooks.find((group) => group.testament === selectedTestament)?.books?.[0];
+    if (first && selectedBook.testament !== selectedTestament) {
+      setSelectedBook({ ...first, testament: selectedTestament });
+      setSelectedChapter(1);
+    }
+  }, [selectedTestament, selectedBook]);
+
+  const filteredGroups = useMemo(() => {
+    return bibleBooks
+      .map((group) => ({
+        ...group,
+        books: group.books.filter((book) => `${book.name} ${group.testament}`.toLowerCase().includes(searchTerm.toLowerCase())),
+      }))
+      .filter((group) => group.books.length > 0);
+  }, [searchTerm]);
+
+  const chapterText = useMemo(() => getChapterText(selectedBook.name, selectedChapter), [selectedBook.name, selectedChapter]);
+  const chapterButtons = useMemo(() => Array.from({ length: selectedBook.chapters }, (_, i) => i + 1), [selectedBook]);
+  const verseNumbers = useMemo(() => chapterText.map((verse) => verse.verse), [chapterText]);
+
+  useEffect(() => {
+    const firstVerse = verseNumbers[0] || 1;
+    const lastVerse = verseNumbers[Math.min(verseNumbers.length - 1, 5)] || firstVerse;
+    setVerseRange({ start: firstVerse, end: Math.max(firstVerse, lastVerse) });
+    setSelectionState((prev) => ({ ...prev, verseKey: null, text: "", start: null, end: null }));
+    setNoteModeVerseKey(null);
+  }, [selectedBook.name, selectedChapter, verseNumbers]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      readerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [selectedBook.name, selectedChapter]);
+
+  useEffect(() => {
+    const clearSelection = () => {
+      const current = window.getSelection?.();
+      if (!current || current.toString().trim()) return;
+      setSelectionState((prev) => ({ ...prev, verseKey: null, text: "", start: null, end: null }));
+      setNoteModeVerseKey(null);
+    };
+    document.addEventListener("selectionchange", clearSelection);
+    return () => document.removeEventListener("selectionchange", clearSelection);
+  }, []);
+
+  const visibleVerses = useMemo(() => {
+    const maxVerse = verseNumbers[verseNumbers.length - 1] || 1;
+    const normalizedStart = Math.max(1, Math.min(verseRange.start, maxVerse));
+    const normalizedEnd = Math.max(normalizedStart, Math.min(verseRange.end, maxVerse));
+    return chapterText.filter((verse) => verse.verse >= normalizedStart && verse.verse <= normalizedEnd);
+  }, [chapterText, verseNumbers, verseRange]);
+
+  const filteredBooksForTestament = useMemo(() => {
+    return (filteredGroups.find((group) => group.testament === selectedTestament)?.books || []).map((book) => ({ ...book, testament: selectedTestament }));
+  }, [filteredGroups, selectedTestament]);
+
+  const clearToolbar = () => {
+    setSelectionState((prev) => ({ ...prev, verseKey: null, text: "", start: null, end: null }));
+    setNoteModeVerseKey(null);
+    window.getSelection?.()?.removeAllRanges();
+  };
+
+  const saveHighlight = (colorOverride, withNote = false) => {
+    const verseKey = selectionState.verseKey;
+    const selectedText = selectionState.text.trim();
+    if (!verseKey || !selectedText || selectionState.start == null || selectionState.end == null) return;
+    const color = colorOverride || selectionState.color;
+    setHighlightsByVerse((prev) => ({
+      ...prev,
+      [verseKey]: [
+        ...(prev[verseKey] || []),
+        {
+          text: selectedText,
+          start: selectionState.start,
+          end: selectionState.end,
+          color,
+          note: withNote ? noteDrafts[verseKey] || "" : "",
+        },
+      ],
+    }));
+    setNoteDrafts((prev) => ({ ...prev, [verseKey]: withNote ? "" : prev[verseKey] || "" }));
+    clearToolbar();
+  };
+
+  const removeHighlight = (verseKey, index) => {
+    setHighlightsByVerse((prev) => ({
+      ...prev,
+      [verseKey]: (prev[verseKey] || []).filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
+
+  const getTextOffset = (container, targetNode, targetOffset) => {
+    if (!container || !targetNode) return 0;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    let currentOffset = 0;
+    let node = walker.nextNode();
+    while (node) {
+      if (node === targetNode) {
+        return currentOffset + targetOffset;
+      }
+      currentOffset += node.textContent?.length || 0;
+      node = walker.nextNode();
+    }
+    return currentOffset;
+  };
+
+  const selectVerseText = (verseKey) => {
+    const selection = window.getSelection?.();
+    const container = verseRefs.current[verseKey];
+    if (!selection || selection.rangeCount === 0 || !container) return;
+    const selectedText = selection.toString().trim();
+    if (!selectedText) return;
+    const range = selection.getRangeAt(0);
+    const common = range.commonAncestorContainer;
+    if (!container.contains(common.nodeType === 3 ? common.parentNode : common)) return;
+    const rect = range.getBoundingClientRect();
+    const start = getTextOffset(container, range.startContainer, range.startOffset);
+    const end = getTextOffset(container, range.endContainer, range.endOffset);
+    if (end <= start) return;
+    setSelectionState((prev) => ({
+      ...prev,
+      verseKey,
+      text: selectedText,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 18,
+      start,
+      end,
+    }));
+    setNoteModeVerseKey(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <TopBar
+        title="Bíblia"
+        subtitle="Selecione um trecho e a barra de destaque aparece perto da seleção, enquanto a leitura sobe automaticamente para evitar rolagem cansativa."
+        breadcrumbs={["Bíblia"]}
+        actions={
+          <>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700"><Highlighter className="h-4 w-4" /> destaque flutuante</div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600"><StickyNote className="h-4 w-4" /> nota por trecho</div>
+          </>
+        }
+      />
+
+      <AnimatePresence>
+        {selectionState.verseKey && selectionState.text && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.94 }}
+            transition={{ duration: 0.18 }}
+            className="fixed z-50"
+            style={{ left: selectionState.x, top: selectionState.y, transform: "translate(-50%, -100%)" }}
+          >
+            <div className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/95 px-3 py-2 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.38)] backdrop-blur-xl">
+              <button type="button" onClick={() => saveHighlight(selectionState.color, noteModeVerseKey === selectionState.verseKey)} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition hover:scale-105" aria-label="Aplicar destaque">
+                <Highlighter className="h-4 w-4" />
+              </button>
+              {Object.keys(highlightColors).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectionState((prev) => ({ ...prev, color }))}
+                  className={cn(
+                    "h-8 w-8 rounded-full ring-2 ring-offset-2 transition hover:scale-105",
+                    color === "yellow" && "bg-amber-300",
+                    color === "pink" && "bg-pink-300",
+                    color === "blue" && "bg-sky-300",
+                    color === "green" && "bg-emerald-300",
+                    color === "purple" && "bg-violet-300",
+                    selectionState.color === color ? "ring-slate-900" : "ring-transparent"
+                  )}
+                  aria-label={`Selecionar cor ${color}`}
+                />
+              ))}
+              <button type="button" onClick={() => setNoteModeVerseKey((prev) => prev === selectionState.verseKey ? null : selectionState.verseKey)} className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full transition", noteModeVerseKey === selectionState.verseKey ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-600 hover:bg-slate-200")} aria-label="Adicionar anotação">
+                <StickyNote className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={clearToolbar} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200" aria-label="Cancelar seleção">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <GlassCard className="p-5 md:p-6">
+          <SectionTitle eyebrow="Catálogo bíblico" title="Livros, capítulos e versículos" description={`Todos os 66 livros e ${totalBibleChapters} capítulos estão disponíveis nesta prévia.`} />
+          <div className="mt-5 flex flex-wrap gap-2">
+            {bibleBooks.map((group) => (
+              <button key={group.testament} onClick={() => setSelectedTestament(group.testament)} className={cn("rounded-full px-4 py-2 text-sm font-semibold transition", selectedTestament === group.testament ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>{group.testament}</button>
+            ))}
+          </div>
+          <div className="relative mt-5">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar livro..." className="w-full rounded-2xl border border-rose-100 bg-white/90 py-3 pl-11 pr-4 outline-none" />
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredBooksForTestament.map((book) => {
+              const isActive = selectedBook.name === book.name;
+              return (
+                <motion.button
+                  key={book.name}
+                  type="button"
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  onClick={() => { setSelectedBook(book); setSelectedChapter(1); }}
+                  className={cn("rounded-[1.5rem] border p-4 text-left transition", isActive ? "border-violet-200 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg" : "border-slate-100 bg-white hover:border-violet-100 hover:bg-violet-50")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <BookOpen className={cn("h-5 w-5", isActive ? "text-white" : "text-violet-500")} />
+                    <div className={cn("text-xs font-semibold", isActive ? "text-white/80" : "text-slate-400")}>{book.chapters} cap.</div>
+                  </div>
+                  <div className={cn("mt-6 text-lg font-bold", isActive ? "text-white" : "text-slate-900")}>{book.name}</div>
+                  <div className={cn("mt-1 text-sm", isActive ? "text-white/85" : "text-slate-500")}>{selectedTestament}</div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        <div ref={readerRef} className="space-y-6">
+          <GlassCard className="p-5 md:p-6 xl:sticky xl:top-4">
+            <div className="flex flex-col gap-4">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.22em] text-violet-500">Leitura selecionada</div>
+                <h3 className="mt-1 text-2xl font-black text-slate-900">{selectedBook.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Ao escolher um livro, a leitura sobe automaticamente para esta área, evitando que os olhos se percam na rolagem.</p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-[1.4rem] border border-slate-100 bg-slate-50 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Capítulo</div>
+                  <select value={selectedChapter} onChange={(e) => setSelectedChapter(Number(e.target.value))} className="w-full rounded-xl bg-white px-3 py-3 text-sm outline-none">
+                    {chapterButtons.map((chapter) => <option key={chapter} value={chapter}>Capítulo {chapter}</option>)}
+                  </select>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-100 bg-slate-50 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Verso inicial</div>
+                  <select value={verseRange.start} onChange={(e) => setVerseRange((prev) => ({ start: Number(e.target.value), end: Math.max(Number(e.target.value), prev.end) }))} className="w-full rounded-xl bg-white px-3 py-3 text-sm outline-none">
+                    {verseNumbers.map((verse) => <option key={verse} value={verse}>{verse}</option>)}
+                  </select>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-100 bg-slate-50 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Verso final</div>
+                  <select value={verseRange.end} onChange={(e) => setVerseRange((prev) => ({ start: Math.min(prev.start, Number(e.target.value)), end: Number(e.target.value) }))} className="w-full rounded-xl bg-white px-3 py-3 text-sm outline-none">
+                    {verseNumbers.filter((verse) => verse >= verseRange.start).map((verse) => <option key={verse} value={verse}>{verse}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {chapterButtons.slice(0, Math.min(18, chapterButtons.length)).map((chapter) => (
+                  <button key={chapter} onClick={() => setSelectedChapter(chapter)} className={cn("rounded-xl px-3 py-2 text-sm font-semibold transition", selectedChapter === chapter ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>{chapter}</button>
+                ))}
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-5 md:p-6">
+            <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3 text-slate-900"><Library className="h-5 w-5 text-rose-500" /> <span className="font-semibold">Texto, destaques e anotações</span></div>
+              <div className="flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600"><Palette className="h-3.5 w-3.5" /> selecione o trecho para abrir o menu flutuante</div>
+            </div>
+
+            <div className="space-y-4">
+              {visibleVerses.map((verse) => {
+                const verseKey = `${selectedBook.name}-${selectedChapter}-${verse.verse}`;
+                const selectedSnippet = selectionState.verseKey === verseKey ? selectionState.text : "";
+                const highlights = highlightsByVerse[verseKey] || [];
+                return (
+                  <motion.div key={verseKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-[1.5rem] border border-rose-100 bg-gradient-to-br from-white to-rose-50 p-4 md:p-5">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-xs font-bold uppercase tracking-[0.2em] text-rose-500">Verso {verse.verse}</div>
+                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">{highlights.length} destaque(s)</div>
+                    </div>
+
+                    <div className="rounded-[1.2rem] border border-white bg-white/92 p-4 shadow-sm">
+                      <p ref={(node) => { if (node) verseRefs.current[verseKey] = node; }} onMouseUp={() => selectVerseText(verseKey)} className="cursor-text text-sm leading-8 text-slate-700">
+                        {renderHighlightedContent(verse.text, highlights, verseKey)}
+                      </p>
+                    </div>
+
+                    <AnimatePresence initial={false}>
+                      {selectedSnippet && noteModeVerseKey === verseKey && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <div className="mt-4 rounded-[1.35rem] border border-slate-100 bg-white/92 p-4 shadow-sm">
+                            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400"><StickyNote className="h-3.5 w-3.5" /> anotação do trecho selecionado</div>
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">{selectedSnippet}</div>
+                            <textarea
+                              value={noteDrafts[verseKey] || ""}
+                              onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [verseKey]: e.target.value }))}
+                              placeholder="Escreva uma anotação sobre esse trecho destacado..."
+                              className="mt-3 min-h-[92px] w-full rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none"
+                            />
+                            <div className="mt-3 flex justify-end">
+                              <button type="button" onClick={() => saveHighlight(selectionState.color, true)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px]">salvar com anotação</button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {highlights.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        <div className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Destaques deste verso</div>
+                        {highlights.map((item, index) => (
+                          <div key={`${verseKey}-${index}`} className="flex flex-col gap-3 rounded-[1.25rem] border border-slate-100 bg-white/88 p-4 md:flex-row md:items-start md:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={cn("rounded-full px-3 py-1 text-xs font-semibold ring-1", highlightColors[item.color] || highlightColors.yellow)}>{item.color}</span>
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{item.text}</span>
+                              </div>
+                              {item.note && <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p>}
+                            </div>
+                            <button type="button" onClick={() => removeHighlight(verseKey, index)} className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200">remover</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchView() {
+  const [query, setQuery] = useState("");
+  const results = useMemo(() => {
+    if (!query) return [];
+    const lower = query.toLowerCase();
+    const fromBooks = flatBooks.filter((book) => book.name.toLowerCase().includes(lower)).slice(0, 8).map((book) => ({ type: "Livro", title: book.name, subtitle: `${book.chapters} capítulos · ${book.testament}` }));
+    const fromNotes = studyNotes.filter((note) => `${note.title} ${note.reference} ${note.content}`.toLowerCase().includes(lower)).map((note) => ({ type: "Nota", title: note.title, subtitle: note.reference }));
+    const fromBookmarks = bookmarks.filter((item) => `${item.reference} ${item.text}`.toLowerCase().includes(lower)).map((item) => ({ type: "Verso salvo", title: item.reference, subtitle: item.text }));
+    return [...fromBooks, ...fromNotes, ...fromBookmarks].slice(0, 12);
+  }, [query]);
+
+  return (
+    <div className="space-y-6">
+      <TopBar title="Buscar" subtitle="Pesquisa transversal entre livros, notas e versos salvos." breadcrumbs={["Buscar"]} />
+      <SectionTitle eyebrow="Descoberta" title="Busca inteligente" description="Uma pesquisa rápida para estrutura bíblica, anotações e favoritos." />
+      <GlassCard className="p-5 md:p-6">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ex.: amor, João, Romanos 8" className="w-full rounded-2xl border border-rose-100 bg-white/90 py-4 pl-12 pr-4 text-base outline-none" />
+        </div>
+      </GlassCard>
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        {results.length === 0 ? (
+          <GlassCard className="p-8 lg:col-span-2 xl:col-span-3">
+            <div className="flex items-center gap-3 text-slate-900"><Search className="h-5 w-5 text-violet-500" /><span className="font-semibold">Digite algo para começar</span></div>
+            <p className="mt-2 text-sm text-slate-600">A busca desta prévia percorre livros, notas e favoritos.</p>
+          </GlassCard>
+        ) : (
+          results.map((result, i) => (
+            <motion.div key={`${result.type}-${result.title}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <GlassCard className="p-5" interactive>
+                <div className="mb-3 flex items-center justify-between"><Pill tone={result.type === "Livro" ? "violet" : result.type === "Nota" ? "rose" : "amber"}>{result.type}</Pill><ChevronRight className="h-4 w-4 text-slate-400" /></div>
+                <div className="font-bold text-slate-900">{result.title}</div>
+                <div className="mt-2 text-sm leading-6 text-slate-600">{result.subtitle}</div>
+              </GlassCard>
+            </motion.div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function runPreviewSanityChecks() {
+  if (readingPlans.length !== 2) throw new Error("Esperado exatamente 2 planos ativos.");
+  if (!readingPlans.some((plan) => plan.type === "new-testament")) throw new Error("Plano do Novo Testamento ausente.");
+  if (!weeklyPlan.every((week) => Array.isArray(week.questions) && week.questions.length > 0)) throw new Error("Cada semana deve possuir perguntas.");
+  if (flatBooks.length !== 66) throw new Error("Esperado catálogo com 66 livros.");
+}
+
+runPreviewSanityChecks();
+
+export default function EstudoBiblicoPreview() {
+  const [tab, setTab] = useState("dashboard");
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const tabs = [
+    { id: "dashboard", label: "Painel", icon: Home },
+    { id: "plans", label: "Planos", icon: Calendar },
+    { id: "notes", label: "Anotações", icon: FileText },
+    { id: "bookmarks", label: "Favoritos", icon: Bookmark },
+    { id: "bible", label: "Bíblia", icon: BookOpen },
+    { id: "search", label: "Buscar", icon: Search },
+  ];
+
+  const goToTab = (id) => {
+    setTab(id);
+    if (id === "plans") setSelectedPlan(null);
+    if (id !== "plans") setSelectedPlan(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,113,133,0.24),_transparent_24%),radial-gradient(circle_at_right,_rgba(168,85,247,0.22),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(59,130,246,0.16),_transparent_24%),linear-gradient(145deg,_#fff8fb_0%,_#fff2f7_26%,_#f7f1ff_70%,_#eef6ff_100%)] p-4 text-slate-900 md:p-6">
+      <div className="mx-auto flex max-w-7xl gap-6">
+        <AnimatePresence initial={false}>
+          {sidebarOpen && (
+            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 280, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="hidden overflow-hidden lg:block">
+              <div className="h-full rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-[0_20px_80px_-30px_rgba(244,114,182,0.45)] backdrop-blur-xl">
+                <div className="mb-8 rounded-[1.9rem] border border-fuchsia-200/60 bg-gradient-to-br from-rose-300 via-fuchsia-300 to-violet-400 p-6 text-white shadow-[0_24px_60px_-26px_rgba(192,38,211,0.55)]">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 shadow-sm backdrop-blur"><BookOpen className="h-6 w-6" /></div>
+                  <div className="text-2xl font-black">Estudo Bíblico</div>
+                  <div className="mt-1 text-sm text-white/90">Painel interativo</div>
+                </div>
+                <nav className="space-y-2">
+                  {tabs.map(({ id, label, icon: Icon }) => (
+                    <button key={id} onClick={() => goToTab(id)} className={cn("flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition", tab === id ? "bg-rose-100 text-rose-700 shadow-sm" : "text-slate-700 hover:bg-rose-50")}>
+                      <Icon className="h-5 w-5" />
+                      <span className="font-semibold">{label}</span>
+                    </button>
+                  ))}
+                </nav>
+                <GlassCard className="mt-6 p-4">
+                  <div className="text-sm font-semibold text-slate-900">Módulos ativos</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Pill>mobile</Pill>
+                    <Pill tone="violet">bible ui</Pill>
+                    <Pill tone="amber">grifos</Pill>
+                  </div>
+                </GlassCard>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        <main className="min-w-0 flex-1">
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-[1.5rem] border border-white/70 bg-white/60 p-3 shadow-[0_20px_80px_-30px_rgba(244,114,182,0.35)] backdrop-blur-xl lg:hidden">
+            <button onClick={() => setSidebarOpen((value) => !value)} className="rounded-xl bg-rose-100 p-3 text-rose-700"><PanelLeft className="h-4 w-4" /></button>
+            <div className="font-bold text-slate-900">Estudo Bíblico</div>
+            <Pill tone="violet">responsive</Pill>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/70 bg-white/58 p-4 shadow-[0_20px_80px_-30px_rgba(244,114,182,0.35)] backdrop-blur-xl md:p-6">
+            <div className="mb-6 flex flex-wrap gap-2 lg:hidden">
+              {tabs.map(({ id, label }) => (
+                <button key={id} onClick={() => goToTab(id)} className={cn("rounded-full px-4 py-2 text-sm font-semibold transition", tab === id ? "bg-rose-100 text-rose-700" : "bg-white text-slate-700")}>{label}</button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div key={`${tab}-${selectedPlan ?? "root"}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+                {tab === "dashboard" && <DashboardView onOpenPlans={() => setTab("plans")} onOpenBible={() => goToTab("bible")} />}
+                {tab === "plans" && !selectedPlan && <StudyPlansHub onSelectPlan={(plan) => setSelectedPlan(plan)} />}
+                {tab === "plans" && selectedPlan === "weekly-study" && <WeeklyPlanView onBack={() => setSelectedPlan(null)} onOpenBible={() => goToTab("bible")} />}
+                {tab === "plans" && selectedPlan === "new-testament" && <NewTestamentPlanView onBack={() => setSelectedPlan(null)} />}
+                {tab === "notes" && <NotesView />}
+                {tab === "bookmarks" && <BookmarksView />}
+                {tab === "bible" && <BibleExplorerView />}
+                {tab === "search" && <SearchView />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
